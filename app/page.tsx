@@ -2,39 +2,45 @@
 
 import { useEffect, useState } from 'react';
 
-const WebViewPage = () => {
-  const [value, setValue] = useState(1);
+declare global {
+  interface Window {
+    ReactNativeWebView?: {
+      postMessage: (data: string) => {};
+    };
+  }
+}
 
-  const handleMessage = (event) => {
-    const data = event;
-    setValue((prev) => prev + 1);
-    alert('Message from Native App ' + event.data);
-    console.log('Received message from React Native app:', data);
+const WebViewPage = () => {
+  const [value, setValue] = useState('');
+
+  console.log('value', value);
+  const handleMessage = (event: MessageEvent) => {
+    setValue(event.data);
+    window?.ReactNativeWebView?.postMessage(event.data);
   };
 
   useEffect(() => {
-    document.addEventListener('message', (event) => {
-      handleMessage(event);
-    });
+    document.addEventListener('message', handleMessage as EventListener);
 
     return () => {
-      document.removeEventListener('message', handleMessage);
+      document.removeEventListener('message', handleMessage as EventListener);
     };
   }, []);
 
   return (
-    <div className='h-screen flex flex-col items-center'>
+    <div className='h-screen flex flex-col items-center break-all'>
       <h1>Welcome to Next.js!</h1>
       <p>Communication with React Native app is enabled.</p>
+      {value}
       <button
-        className='bg-indigo-500 p-2 rounded w-full'
+        className='bg-indigo-500 p-2 rounded'
         onClick={() => {
-          window?.ReactNativeWebView?.postMessage(
-            'Data from WebView / Website'
-          );
+          if (window?.ReactNativeWebView)
+            window?.ReactNativeWebView?.postMessage('OpenCamera');
+          else alert('This function can be accessed only on mobile device');
         }}
       >
-        Send Message to Next React Native {value}
+        Open Camera
       </button>
     </div>
   );
